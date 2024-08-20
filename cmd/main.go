@@ -14,10 +14,20 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
-	<-sig
+	go func() {
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+		<-sig
 
-	log.Println("Received SIGTERM, shutting down gracefully...")
-	_ = lis.Close()
+		log.Println("Received SIGTERM, shutting down gracefully...")
+		_ = lis.Close()
+		os.Exit(0)
+	}()
+
+	conn, err := lis.Accept()
+	if err != nil {
+		log.Fatalf("failed to accept: %v", err)
+	}
+
+	log.Println("Accepted connection from", conn.RemoteAddr())
 }
